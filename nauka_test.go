@@ -56,7 +56,7 @@ func TestSearchNaukaIsbn(t *testing.T) {
 
 	testCases := map[string]BookSearchResult{
 		// Moscow, hardback
-		"9785002223046": BookSearchResult{
+		"9785002223046": {
 			Title:     "Мы на Западе и на Востоке. Культурно-исторические основы русской государственности. (Сила мысли)",
 			Author:    "Иванов В.Н.",
 			Publisher: "Родина",
@@ -68,7 +68,7 @@ func TestSearchNaukaIsbn(t *testing.T) {
 			Price:     5280,
 		},
 		// Saint Petersburg, paperback
-		"9785002561001": BookSearchResult{
+		"9785002561001": {
 			Title:     "Документы Свирлага из фонда колонии \"Свирьстрой\". 1930-1937 гг.: По материалам фонда Р-2557 Ленинградского областного государственного архива гор. Выборга.",
 			Author:    "Муравьева М.В.",
 			Publisher: "Реноме",
@@ -80,7 +80,7 @@ func TestSearchNaukaIsbn(t *testing.T) {
 			Price:     13860,
 		},
 		// the publisher doesn't include `<>`
-		"9785605096283": BookSearchResult{
+		"9785605096283": {
 			Title:     "Культуры и цивилизации Центральной Азии от неолита до средневековья. Материалы международной научной конференции, посвященной 120-летию А. М. Беленицкого, 95-летию В. М. Массона・・・",
 			Author:    "Никоноров В.П., Стоянов Е.О. (ed.)",
 			Publisher: "Ин-т истории материальной культуры РАН",
@@ -92,7 +92,7 @@ func TestSearchNaukaIsbn(t *testing.T) {
 			Price:     27940,
 		},
 		// the place of publication contains space
-		"9785947062588": BookSearchResult{
+		"9785947062588": {
 			Title:     "От Александра III до Горбачева. Жизнь композитора Александра Касьянова. (Нижегородские были)",
 			Author:    "Колесников В.С.",
 			Publisher: "Книги",
@@ -104,7 +104,7 @@ func TestSearchNaukaIsbn(t *testing.T) {
 			Price:     10010,
 		},
 		// the author is empty, the publisher contains semicolon, the place of publication contains hyphens
-		"9785986156750": BookSearchResult{
+		"9785986156750": {
 			Title:     "Историки Ростовского университета./ 3-е изд., испр. и доп.",
 			Author:    "",
 			Publisher: "Мини Тайп; ЮФУ",
@@ -116,7 +116,7 @@ func TestSearchNaukaIsbn(t *testing.T) {
 			Price:     15400,
 		},
 		// the place of publication is irregular
-		"9785449936851": BookSearchResult{
+		"9785449936851": {
 			Title:     "Даша севастопольская. Первая сестра милосердия. (Люди. Судьбы. Эпохи)",
 			Author:    "Лукашевич К.В.",
 			Publisher: "Директмедиа Паблишинг",
@@ -143,7 +143,7 @@ func TestFetchNaukaDetail(t *testing.T) {
 
 	testCases := map[string]BookDetailInfo{
 		// Moscow, hardback
-		"256516": BookDetailInfo{
+		"256516": {
 			Title:     "Мы на Западе и на Востоке. Культурно-исторические основы русской государственности. (Сила мысли)",
 			Author:    "Иванов В.Н.",
 			Publisher: "Родина",
@@ -156,7 +156,7 @@ func TestFetchNaukaDetail(t *testing.T) {
 			StoreID:   "256516",
 		},
 		// Saint Petersburg, paperback
-		"273925": BookDetailInfo{
+		"273925": {
 			Title:     "Документы Свирлага из фонда колонии \"Свирьстрой\". 1930-1937 гг.: По материалам фонда Р-2557 Ленинградского областного государственного архива гор. Выборга.",
 			Author:    "Муравьева М.В.",
 			Publisher: "Реноме",
@@ -169,7 +169,7 @@ func TestFetchNaukaDetail(t *testing.T) {
 			StoreID:   "273925",
 		},
 		// the publisher doesn't include `<>`
-		"269203": BookDetailInfo{
+		"269203": {
 			Title:     "Культуры и цивилизации Центральной Азии от неолита до средневековья. Материалы международной научной конференции, посвященной 120-летию А. М. Беленицкого, 95-летию В. М. Массона и 100-летию Ю. А. Заднепровского, Санкт-Петербург, 5-8 ноября 2024 г.",
 			Author:    "Никоноров В.П., Стоянов Е.О. (ed.)",
 			Publisher: "Ин-т истории материальной культуры РАН",
@@ -182,7 +182,7 @@ func TestFetchNaukaDetail(t *testing.T) {
 			StoreID:   "269203",
 		},
 		// the place of publication contains space
-		"247513": BookDetailInfo{
+		"247513": {
 			Title:     "От Александра III до Горбачева. Жизнь композитора Александра Касьянова. (Нижегородские были)",
 			Author:    "Колесников В.С.",
 			Publisher: "Книги",
@@ -195,7 +195,7 @@ func TestFetchNaukaDetail(t *testing.T) {
 			StoreID:   "247513",
 		},
 		// the author is empty, the publisher contains semicolon, the place of publication contains hyphens
-		"276081": BookDetailInfo{
+		"276081": {
 			Title:     "Историки Ростовского университета./ 3-е изд., испр. и доп.",
 			Author:    "",
 			Publisher: "Мини Тайп; ЮФУ",
@@ -208,7 +208,7 @@ func TestFetchNaukaDetail(t *testing.T) {
 			StoreID:   "276081",
 		},
 		// the place of publication is irregular
-		"247047": BookDetailInfo{
+		"247047": {
 			Title:     "Даша севастопольская. Первая сестра милосердия. (Люди. Судьбы. Эпохи)",
 			Author:    "Лукашевич К.В.",
 			Publisher: "Директмедиа Паблишинг",
