@@ -5,11 +5,16 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 )
 
 func printUsage() {
 	fmt.Fprintf(os.Stderr, "Usage:\n  bookstore-cli [store_name] ...\n\nSupported store names:\n  nauka\n\nExample:\n  bookstore-cli nauka --isbn 9785042420481\n")
+}
+
+func isValidIsbn(isbn string) bool {
+	return regexp.MustCompile(`^\d{13}$`).MatchString(strings.ReplaceAll(isbn, "-", ""))
 }
 
 func main() {
@@ -32,11 +37,29 @@ func main() {
 			os.Exit(1)
 		}
 
+		if !isValidIsbn(*isbn) {
+			fmt.Fprintf(os.Stderr, "Error: invalid ISBN: %s\n", *isbn)
+			os.Exit(1)
+		}
+
 		naukaDomain := "https://www.naukajapan.jp"
 
 		searchResults, err := SearchNauka(naukaDomain, strings.ReplaceAll(*isbn, "-", ""))
-		if err != nil || len(searchResults) != 1 {
+		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error scraping book from Nauka Japan: %v\n", err)
+			os.Exit(1)
+		}
+
+		if len(searchResults) == 0 {
+			fmt.Fprintf(os.Stderr, "Book not found: %s\n", *isbn)
+			os.Exit(1)
+		}
+		if len(searchResults) > 1 {
+			var ids []string
+			for _, result := range searchResults {
+				ids = append(ids, result.StoreID)
+			}
+			fmt.Fprintf(os.Stderr, "Multiple books found: id=%s\n", strings.Join(ids, ", "))
 			os.Exit(1)
 		}
 
