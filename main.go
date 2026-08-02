@@ -58,26 +58,10 @@ func main() {
 
 		naukaDomain := "https://www.naukajapan.jp"
 
-		searchResults, err := SearchNauka(naukaDomain, strings.ReplaceAll(*isbn, "-", ""))
-		if err != nil {
-			exitWithError(fmt.Sprintf("Error scraping book from Nauka Japan: %v", err))
-		}
-
-		if len(searchResults) == 0 {
-			exitWithError(fmt.Sprintf("Book not found: %s", *isbn))
-		}
-		if len(searchResults) > 1 {
-			var ids []string
-			for _, result := range searchResults {
-				ids = append(ids, result.StoreID)
-			}
-			exitWithError(fmt.Sprintf("Multiple books found: id=%s", strings.Join(ids, ", ")))
-		}
-
-		detailInfo, err := FetchNaukaDetail("https://www.naukajapan.jp", searchResults[0].StoreID)
+		detailInfo, err := FetchNaukaDetailByIsbn(naukaDomain, strings.ReplaceAll(*isbn, "-", ""))
 
 		if err != nil {
-			exitWithError(fmt.Sprintf("Error scraping book from Nauka Japan: %v", err))
+			exitWithError(err.Error())
 		}
 
 		jsonBytes, err := json.MarshalIndent(detailInfo, "", "  ")

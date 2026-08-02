@@ -317,3 +317,28 @@ func FetchNaukaDetail(host string, storeId string) (*BookDetailInfo, error) {
 
 	return result, nil
 }
+
+func FetchNaukaDetailByIsbn(host string, isbn string) (*BookDetailInfo, error) {
+	searchResults, err := SearchNauka(host, strings.ReplaceAll(isbn, "-", ""))
+	if err != nil {
+		return nil, err
+	}
+
+	if len(searchResults) == 0 {
+		return nil, fmt.Errorf("Book not found: %s", isbn)
+	}
+	if len(searchResults) > 1 {
+		var ids []string
+		for _, result := range searchResults {
+			ids = append(ids, result.StoreID)
+		}
+		return nil, fmt.Errorf("Multiple books found for the same ISBN: id=%s", strings.Join(ids, ", "))
+	}
+
+	detailInfo, err := FetchNaukaDetail(host, searchResults[0].StoreID)
+
+	if err != nil {
+		return nil, err
+	}
+	return detailInfo, nil
+}
