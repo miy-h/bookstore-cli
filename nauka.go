@@ -24,6 +24,19 @@ type BookSearchResult struct {
 	Price     int    `json:"price"`
 }
 
+type BookDetailInfo struct {
+	Title     string `json:"title"`
+	Author    string `json:"author"`
+	Publisher string `json:"publisher"`
+	Place     string `json:"place"`
+	Pages     int    `json:"pages"`
+	Type      string `json:"type"`
+	Year      int    `json:"year"`
+	Price     int    `json:"price"`
+	Isbn      string `json:"isbn"`
+	StoreID   string `json:"storeId"`
+}
+
 func parsePlace(raw string) string {
 	cleaned := strings.Trim(raw, " .,:\t\r\n")
 	switch strings.ToUpper(cleaned) {
@@ -46,6 +59,24 @@ func parseType(raw string) string {
 	return s
 }
 
+func parseYear(raw string) int {
+	reYear := regexp.MustCompile(`(\d{4})\s*年`)
+	if yMatch := reYear.FindStringSubmatch(raw); len(yMatch) > 1 {
+		year, _ := strconv.Atoi(yMatch[1])
+		return year
+	}
+	return 0
+}
+
+func parsePrice(raw string) int {
+	rePrice := regexp.MustCompile(`\\([0-9,]+)`)
+	if priceMatch := rePrice.FindStringSubmatch(raw); len(priceMatch) > 1 {
+		price, _ := strconv.Atoi(strings.ReplaceAll(priceMatch[1], ",", ""))
+		return price
+	}
+	return 0
+}
+
 type CommonBookInfo struct {
 	Title     string
 	Author    string
@@ -53,7 +84,6 @@ type CommonBookInfo struct {
 	Place     string
 	Pages     int
 	Type      string
-	Year      int
 	Price     int
 }
 
@@ -138,17 +168,7 @@ func parseCommonBookInfo(s *goquery.Selection) (*CommonBookInfo, error) {
 		}
 	}
 
-	leftText := s.Find(".buy_selection_sec .left").Text()
-	reYear := regexp.MustCompile(`(\d{4})\s*年`)
-	if yMatch := reYear.FindStringSubmatch(leftText); len(yMatch) > 1 {
-		bookInfo.Year, _ = strconv.Atoi(yMatch[1])
-	}
-
-	rawPriceString := s.Find(".buy_selection h5").Text()
-	rePrice := regexp.MustCompile(`\\([0-9,]+)`)
-	if priceMatch := rePrice.FindStringSubmatch(rawPriceString); len(priceMatch) > 1 {
-		bookInfo.Price, _ = strconv.Atoi(strings.ReplaceAll(priceMatch[1], ",", ""))
-	}
+	bookInfo.Price = parsePrice(s.Find("h5").Text())
 
 	return bookInfo, nil
 }
@@ -167,7 +187,6 @@ func parseBookFromSearchPage(s *goquery.Selection) (*BookSearchResult, error) {
 	book.Place = commonInfo.Place
 	book.Pages = commonInfo.Pages
 	book.Type = commonInfo.Type
-	book.Year = commonInfo.Year
 	book.Price = commonInfo.Price
 
 	href, exists := s.Find("h3 a").Attr("href")
@@ -183,6 +202,8 @@ func parseBookFromSearchPage(s *goquery.Selection) (*BookSearchResult, error) {
 		return nil, fmt.Errorf("invalid store link: %s", href)
 	}
 	book.StoreID = id[0]
+
+	book.Year = parseYear(s.Find(".buy_selection_sec .left").Text())
 
 	return book, nil
 }
@@ -223,6 +244,76 @@ func SearchNauka(host string, query string) ([]*BookSearchResult, error) {
 	if parseErr != nil {
 		return nil, parseErr
 	}
+
+	return result, nil
+}
+
+func parseBookFromDetailPage(s *goquery.Selection) (*BookDetailInfo, error) {
+	book := &BookDetailInfo{}
+
+	commonInfo, err := parseCommonBookInfo(s)
+	if err != nil {
+		return nil, err
+	}
+
+	book.Title = commonInfo.Title
+	book.Author = commonInfo.Author
+	book.Publisher = commonInfo.Publisher
+	book.Place = commonInfo.Place
+	book.Pages = commonInfo.Pages
+	book.Type = commonInfo.Type
+	book.Price = commonInfo.Price
+
+	text := s.Find("h4 + p").Text()
+
+	book.Year = parseYear(text)
+
+	reIsbn := regexp.MustCompile(`(?i)ISBN[\s ]+(\d+)`)
+	if isbnMatch := reIsbn.FindStringSubmatch(text); len(isbnMatch) > 0 {
+		book.Isbn = isbnMatch[1]
+	}
+
+	return book, nil
+}
+
+func FetchNaukaDetail(host string, storeId string) (*BookDetailInfo, error) {
+	targetURL := fmt.Sprintf("%s/detail.php?id=%s", host, storeId)
+
+	c := colly.NewCollector(
+		colly.UserAgent("bookstore-cli"),
+	)
+
+	var result *BookDetailInfo
+	var parseErr error
+
+	c.OnHTML("#main_detail_con li", func(e *colly.HTMLElement) {
+		res, err := parseBookFromDetailPage(e.DOM)
+		if err != nil {
+			parseErr = err
+			return
+		}
+		result = res
+	})
+
+	var reqErr error
+	c.OnError(func(r *colly.Response, err error) {
+		reqErr = fmt.Errorf("HTTP request failed: %w (status: %d)", err, r.StatusCode)
+	})
+
+	err := c.Visit(targetURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to visit URL: %w", err)
+	}
+
+	if reqErr != nil {
+		return nil, reqErr
+	}
+
+	if parseErr != nil {
+		return nil, parseErr
+	}
+
+	result.StoreID = storeId
 
 	return result, nil
 }

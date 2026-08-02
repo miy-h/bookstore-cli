@@ -32,13 +32,22 @@ func main() {
 			os.Exit(1)
 		}
 
-		result, err := SearchNauka("https://www.naukajapan.jp", strings.ReplaceAll(*isbn, "-", ""))
-		if err != nil || len(result) != 1 {
+		naukaDomain := "https://www.naukajapan.jp"
+
+		searchResults, err := SearchNauka(naukaDomain, strings.ReplaceAll(*isbn, "-", ""))
+		if err != nil || len(searchResults) != 1 {
 			fmt.Fprintf(os.Stderr, "Error scraping book from Nauka Japan: %v\n", err)
 			os.Exit(1)
 		}
 
-		jsonBytes, err := json.MarshalIndent(result[0], "", "  ")
+		detailInfo, err := FetchNaukaDetail("https://www.naukajapan.jp", searchResults[0].StoreID)
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error scraping book from Nauka Japan: %v\n", err)
+			os.Exit(1)
+		}
+
+		jsonBytes, err := json.MarshalIndent(detailInfo, "", "  ")
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error formatting JSON output: %v\n", err)
 			os.Exit(1)
