@@ -10,11 +10,26 @@ import (
 )
 
 func printUsage() {
-	fmt.Fprintf(os.Stderr, "Usage:\n  bookstore-cli [store_name] ...\n\nSupported store names:\n  nauka\n\nExample:\n  bookstore-cli nauka --isbn 9785042420481\n")
+	fmt.Printf("Usage:\n  bookstore-cli [store_name] ...\n\nSupported store names:\n  nauka\n\nExample:\n  bookstore-cli nauka --isbn 9785042420481\n")
 }
 
 func isValidIsbn(isbn string) bool {
 	return regexp.MustCompile(`^\d{13}$`).MatchString(strings.ReplaceAll(isbn, "-", ""))
+}
+
+func exitWithError(message string) {
+	error := struct {
+		Error   bool   `json:"error"`
+		Message string `json:"message"`
+	}{true, message}
+	jsonBytes, err := json.Marshal(error)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error formatting JSON output: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println(string(jsonBytes))
+	os.Exit(1)
 }
 
 func main() {
@@ -26,48 +41,43 @@ func main() {
 	storeName := os.Args[1]
 
 	switch storeName {
+	case "--help":
+		printUsage()
 	case "nauka":
 		naukaCmd := flag.NewFlagSet("nauka", flag.ExitOnError)
 		isbn := naukaCmd.String("isbn", "", "ISBN of the book")
 
 		err := naukaCmd.Parse(os.Args[2:])
 		if err != nil || *isbn == "" {
-			fmt.Fprintf(os.Stderr, "Error: --isbn flag is required\n")
-			printUsage()
-			os.Exit(1)
+			exitWithError("--isbn flag is required")
 		}
 
 		if !isValidIsbn(*isbn) {
-			fmt.Fprintf(os.Stderr, "Error: invalid ISBN: %s\n", *isbn)
-			os.Exit(1)
+			exitWithError(fmt.Sprintf("Invalid ISBN: %s", *isbn))
 		}
 
 		naukaDomain := "https://www.naukajapan.jp"
 
 		searchResults, err := SearchNauka(naukaDomain, strings.ReplaceAll(*isbn, "-", ""))
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error scraping book from Nauka Japan: %v\n", err)
-			os.Exit(1)
+			exitWithError(fmt.Sprintf("Error scraping book from Nauka Japan: %v", err))
 		}
 
 		if len(searchResults) == 0 {
-			fmt.Fprintf(os.Stderr, "Book not found: %s\n", *isbn)
-			os.Exit(1)
+			exitWithError(fmt.Sprintf("Book not found: %s", *isbn))
 		}
 		if len(searchResults) > 1 {
 			var ids []string
 			for _, result := range searchResults {
 				ids = append(ids, result.StoreID)
 			}
-			fmt.Fprintf(os.Stderr, "Multiple books found: id=%s\n", strings.Join(ids, ", "))
-			os.Exit(1)
+			exitWithError(fmt.Sprintf("Multiple books found: id=%s", strings.Join(ids, ", ")))
 		}
 
 		detailInfo, err := FetchNaukaDetail("https://www.naukajapan.jp", searchResults[0].StoreID)
 
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error scraping book from Nauka Japan: %v\n", err)
-			os.Exit(1)
+			exitWithError(fmt.Sprintf("Error scraping book from Nauka Japan: %v", err))
 		}
 
 		jsonBytes, err := json.MarshalIndent(detailInfo, "", "  ")
