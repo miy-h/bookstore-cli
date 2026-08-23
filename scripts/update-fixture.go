@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -118,16 +118,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	var buf bytes.Buffer
-	enc := json.NewEncoder(&buf)
-	enc.SetEscapeHTML(false)
-	enc.SetIndent("", "    ")
-	if err := enc.Encode(fixtures); err != nil {
+	jsonBytes, err := json.Marshal(fixtures, json.Deterministic(true), jsontext.WithIndent("    "))
+	jsonBytes = append(jsonBytes, '\n')
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to encode fixtures JSON: %v\n", err)
 		os.Exit(1)
 	}
 
-	if err := os.WriteFile(config.fixturePath, buf.Bytes(), 0644); err != nil {
+	if err := os.WriteFile(config.fixturePath, jsonBytes, 0644); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to write fixture file: %v\n", err)
 		os.Exit(1)
 	}

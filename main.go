@@ -1,7 +1,8 @@
 package main
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"flag"
 	"fmt"
@@ -50,10 +51,8 @@ type NaukaParams struct {
 }
 
 func parseNaukaParams(paramsJson string) (*NaukaParams, error) {
-	dec := json.NewDecoder(strings.NewReader(paramsJson))
-	dec.DisallowUnknownFields()
 	var parsed NaukaParams
-	err := dec.Decode(&parsed)
+	err := json.Unmarshal([]byte(paramsJson), &parsed, json.RejectUnknownMembers(true))
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +108,7 @@ func main() {
 			}
 		}
 
-		jsonBytes, err := json.MarshalIndent(result, "", "  ")
+		jsonBytes, err := json.Marshal(result, json.Deterministic(true), jsontext.WithIndent("  "))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error formatting JSON output: %v\n", err)
 			os.Exit(1)
