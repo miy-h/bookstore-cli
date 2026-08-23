@@ -101,8 +101,7 @@ func main() {
 				time.Sleep(1 * time.Second)
 			}
 
-			naukaDomain := "https://www.naukajapan.jp"
-			detailInfo, err := FetchNaukaDetailByIsbn(naukaDomain, strings.ReplaceAll(isbn, "-", ""))
+			detailInfo, err := FetchNaukaDetailByIsbn(strings.ReplaceAll(isbn, "-", ""), nil)
 			if err != nil {
 				result[isbn] = createErrorObject(err.Error())
 			} else {

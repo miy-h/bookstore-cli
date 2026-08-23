@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"html"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -208,12 +209,15 @@ func parseBookFromSearchPage(s *goquery.Selection) (*BookSearchResult, error) {
 	return book, nil
 }
 
-func SearchNauka(host string, query string) ([]*BookSearchResult, error) {
-	targetURL := fmt.Sprintf("%s/?orderby=&desc=&q_category1=&q_category2=&q=%s", host, url.QueryEscape(query))
+func SearchNauka(query string, client *http.Client) ([]*BookSearchResult, error) {
+	targetURL := fmt.Sprintf("https://www.naukajapan.jp/?orderby=&desc=&q_category1=&q_category2=&q=%s", url.QueryEscape(query))
 
 	c := colly.NewCollector(
 		colly.UserAgent("bookstore-cli"),
 	)
+	if client != nil {
+		c.SetClient(client)
+	}
 
 	var result []*BookSearchResult
 	var parseErr error
@@ -276,12 +280,15 @@ func parseBookFromDetailPage(s *goquery.Selection) (*BookDetailInfo, error) {
 	return book, nil
 }
 
-func FetchNaukaDetail(host string, storeId string) (*BookDetailInfo, error) {
-	targetURL := fmt.Sprintf("%s/detail.php?id=%s", host, storeId)
+func FetchNaukaDetail(storeId string, client *http.Client) (*BookDetailInfo, error) {
+	targetURL := fmt.Sprintf("https://www.naukajapan.jp/detail.php?id=%s", storeId)
 
 	c := colly.NewCollector(
 		colly.UserAgent("bookstore-cli"),
 	)
+	if client != nil {
+		c.SetClient(client)
+	}
 
 	var result *BookDetailInfo
 	var parseErr error
@@ -318,8 +325,8 @@ func FetchNaukaDetail(host string, storeId string) (*BookDetailInfo, error) {
 	return result, nil
 }
 
-func FetchNaukaDetailByIsbn(host string, isbn string) (*BookDetailInfo, error) {
-	searchResults, err := SearchNauka(host, strings.ReplaceAll(isbn, "-", ""))
+func FetchNaukaDetailByIsbn(isbn string, client *http.Client) (*BookDetailInfo, error) {
+	searchResults, err := SearchNauka(strings.ReplaceAll(isbn, "-", ""), client)
 	if err != nil {
 		return nil, err
 	}
@@ -335,7 +342,7 @@ func FetchNaukaDetailByIsbn(host string, isbn string) (*BookDetailInfo, error) {
 		return nil, fmt.Errorf("Multiple books found for the same ISBN: id=%s", strings.Join(ids, ", "))
 	}
 
-	detailInfo, err := FetchNaukaDetail(host, searchResults[0].StoreID)
+	detailInfo, err := FetchNaukaDetail(searchResults[0].StoreID, client)
 
 	if err != nil {
 		return nil, err

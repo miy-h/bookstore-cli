@@ -17,12 +17,12 @@ func ParseFixture(path string) map[string]string {
 	return fixtures
 }
 
-func StartTestServer() *httptest.Server {
+func GetMockedClient(t *testing.T) *http.Client {
 	mux := http.NewServeMux()
 	detailFixtures := ParseFixture("fixtures/nauka/detail.json")
 	searchFixtures := ParseFixture("fixtures/nauka/search.json")
 
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET www.naukajapan.jp/", func(w http.ResponseWriter, r *http.Request) {
 		queryWord := r.URL.Query().Get("q")
 		val, hasKey := searchFixtures[queryWord]
 		if hasKey {
@@ -35,7 +35,7 @@ func StartTestServer() *httptest.Server {
 		}
 	})
 
-	mux.HandleFunc("/detail.php", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET www.naukajapan.jp/detail.php", func(w http.ResponseWriter, r *http.Request) {
 		id := r.URL.Query().Get("id")
 		val, hasKey := detailFixtures[id]
 		if hasKey {
@@ -47,12 +47,13 @@ func StartTestServer() *httptest.Server {
 		}
 	})
 
-	return httptest.NewServer(mux)
+	server := httptest.NewTestServer(t, mux)
+	t.Cleanup(func() { server.Close() })
+	return server.Client()
 }
 
 func TestSearchNaukaIsbn(t *testing.T) {
-	server := StartTestServer()
-	defer server.Close()
+	client := GetMockedClient(t)
 
 	testCases := map[string]BookSearchResult{
 		// Moscow, hardback
@@ -130,7 +131,7 @@ func TestSearchNaukaIsbn(t *testing.T) {
 	}
 
 	for isbn, expected := range testCases {
-		result, err := SearchNauka(server.URL, isbn)
+		result, err := SearchNauka(isbn, client)
 		if err != nil || len(result) != 1 || !reflect.DeepEqual(result[0], &expected) {
 			t.Errorf("search by ISBN failed: %s", isbn)
 		}
@@ -138,8 +139,7 @@ func TestSearchNaukaIsbn(t *testing.T) {
 }
 
 func TestFetchNaukaDetail(t *testing.T) {
-	server := StartTestServer()
-	defer server.Close()
+	client := GetMockedClient(t)
 
 	testCases := map[string]BookDetailInfo{
 		// Moscow, hardback
@@ -223,7 +223,7 @@ func TestFetchNaukaDetail(t *testing.T) {
 	}
 
 	for storeId, expected := range testCases {
-		result, err := FetchNaukaDetail(server.URL, storeId)
+		result, err := FetchNaukaDetail(storeId, client)
 		if err != nil || !reflect.DeepEqual(result, &expected) {
 			t.Errorf("fetch book detail failed: %s", storeId)
 		}
