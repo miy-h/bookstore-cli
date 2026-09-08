@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func ParseFixture(path string) map[string]string {
+func parseFixtureForNauka(path string) map[string]string {
 	fixtures := make(map[string]string)
 	if data, err := os.ReadFile(path); err == nil && len(data) > 0 {
 		_ = json.Unmarshal(data, &fixtures)
@@ -17,10 +17,10 @@ func ParseFixture(path string) map[string]string {
 	return fixtures
 }
 
-func GetMockedClient(t *testing.T) *http.Client {
+func getMockedClientForNauka(t *testing.T) *http.Client {
 	mux := http.NewServeMux()
-	detailFixtures := ParseFixture("fixtures/nauka/detail.json")
-	searchFixtures := ParseFixture("fixtures/nauka/search.json")
+	detailFixtures := parseFixtureForNauka("fixtures/nauka/detail.json")
+	searchFixtures := parseFixtureForNauka("fixtures/nauka/search.json")
 
 	mux.HandleFunc("GET www.naukajapan.jp/", func(w http.ResponseWriter, r *http.Request) {
 		queryWord := r.URL.Query().Get("q")
@@ -53,7 +53,7 @@ func GetMockedClient(t *testing.T) *http.Client {
 }
 
 func TestSearchNaukaIsbn(t *testing.T) {
-	client := GetMockedClient(t)
+	client := getMockedClientForNauka(t)
 
 	testCases := map[string]BookSearchResult{
 		// Moscow, hardback
@@ -139,7 +139,7 @@ func TestSearchNaukaIsbn(t *testing.T) {
 }
 
 func TestFetchNaukaDetail(t *testing.T) {
-	client := GetMockedClient(t)
+	client := getMockedClientForNauka(t)
 
 	testCases := map[string]BookDetailInfo{
 		// Moscow, hardback
