@@ -13,7 +13,7 @@ import (
 )
 
 func printUsage() {
-	fmt.Printf("Usage:\n  bookstore-cli [store_name] ...\n\nSupported store names:\n  nauka\n\nExample:\n  bookstore-cli nauka --params '{\"isbn\":[\"9785605096283\",\"9785947062588\"]}'\n")
+	fmt.Printf("Usage:\n  bookstore-cli [store_name] ...\n\nSupported store names:\n  nauka\n  kyokuto\n\nExamples:\n  bookstore-cli nauka --params '{\"isbn\":[\"9785605096283\",\"9785947062588\"]}'\n  bookstore-cli kyokuto --params '{\"isbn\":[\"9798887196589\"]}'\n")
 }
 
 func isValidIsbn(isbn string) bool {
@@ -52,6 +52,22 @@ type NaukaParams struct {
 
 func parseNaukaParams(paramsJson string) (*NaukaParams, error) {
 	var parsed NaukaParams
+	err := json.Unmarshal([]byte(paramsJson), &parsed, json.RejectUnknownMembers(true))
+	if err != nil {
+		return nil, err
+	}
+	if len(parsed.Isbn) == 0 {
+		return nil, errors.New("ISBN list is empty")
+	}
+	return &parsed, nil
+}
+
+type KyokutoParams struct {
+	Isbn []string `json:"isbn"`
+}
+
+func parseKyokutoParams(paramsJson string) (*KyokutoParams, error) {
+	var parsed KyokutoParams
 	err := json.Unmarshal([]byte(paramsJson), &parsed, json.RejectUnknownMembers(true))
 	if err != nil {
 		return nil, err
@@ -101,6 +117,48 @@ func main() {
 			}
 
 			detailInfo, err := FetchNaukaDetailByIsbn(strings.ReplaceAll(isbn, "-", ""), nil)
+			if err != nil {
+				result[isbn] = createErrorObject(err.Error())
+			} else {
+				result[isbn] = detailInfo
+			}
+		}
+
+		jsonBytes, err := json.Marshal(result, json.Deterministic(true), jsontext.WithIndent("  "))
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error formatting JSON output: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Println(string(jsonBytes))
+
+	case "kyokuto":
+		kyokutoCmd := flag.NewFlagSet("kyokuto", flag.ExitOnError)
+		paramsStr := kyokutoCmd.String("params", "", "JSON input")
+
+		err := kyokutoCmd.Parse(os.Args[2:])
+		if err != nil || *paramsStr == "" {
+			exitWithError("--params flag is required")
+		}
+
+		params, err := parseKyokutoParams(*paramsStr)
+		if err != nil {
+			exitWithError(fmt.Sprintf("Invalid params: %v", err))
+		}
+
+		for _, isbn := range params.Isbn {
+			if !isValidIsbn(isbn) {
+				exitWithError(fmt.Sprintf("Invalid ISBN: %s", isbn))
+			}
+		}
+
+		result := make(map[string]any)
+		for i, isbn := range params.Isbn {
+			if i != 0 {
+				time.Sleep(1 * time.Second)
+			}
+
+			detailInfo, err := FetchKyokutoDetailByIsbn(strings.ReplaceAll(isbn, "-", ""), nil)
 			if err != nil {
 				result[isbn] = createErrorObject(err.Error())
 			} else {

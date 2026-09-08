@@ -5,6 +5,7 @@ go 1.27.1
 require (
 	github.com/PuerkitoBio/goquery v1.12.0
 	github.com/gocolly/colly/v2 v2.3.0
+	github.com/google/go-querystring v1.2.0
 )
 
 require (
