@@ -88,8 +88,8 @@ func getMockedClientForKyokuto(t *testing.T) *http.Client {
 func TestSearchKyokuto(t *testing.T) {
 	client := getMockedClientForKyokuto(t)
 	testCases := map[KyokutoSearchOptions][]*KyokutoSearchResult{
-		{Isbn: "9798887196589"}: []*KyokutoSearchResult{
-			&KyokutoSearchResult{
+		{Isbn: "9798887196589"}: {
+			{
 				Title:   "Dreams of Emancipation : A Transnational History of Revolutionary Russia.",
 				Isbn:    "9798887196589",
 				Price:   27881,
