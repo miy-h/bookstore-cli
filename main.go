@@ -7,17 +7,11 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"regexp"
-	"strings"
 	"time"
 )
 
 func printUsage() {
 	fmt.Printf("Usage:\n  bookstore-cli [store_name] ...\n\nSupported store names:\n  nauka\n  kyokuto\n\nExamples:\n  bookstore-cli nauka --params '{\"isbn\":[\"9785605096283\",\"9785947062588\"]}'\n  bookstore-cli kyokuto --params '{\"isbn\":[\"9798887196589\"]}'\n")
-}
-
-func isValidIsbn(isbn string) bool {
-	return regexp.MustCompile(`^\d{13}$`).MatchString(strings.ReplaceAll(isbn, "-", ""))
 }
 
 type ErrorObject struct {
@@ -59,6 +53,11 @@ func parseNaukaParams(paramsJson string) (*NaukaParams, error) {
 	if len(parsed.Isbn) == 0 {
 		return nil, errors.New("ISBN list is empty")
 	}
+	for _, isbn := range parsed.Isbn {
+		if !IsValidIsbn(isbn) {
+			return nil, fmt.Errorf("Invalid ISBN: %s", isbn)
+		}
+	}
 	return &parsed, nil
 }
 
@@ -74,6 +73,11 @@ func parseKyokutoParams(paramsJson string) (*KyokutoParams, error) {
 	}
 	if len(parsed.Isbn) == 0 {
 		return nil, errors.New("ISBN list is empty")
+	}
+	for _, isbn := range parsed.Isbn {
+		if !IsValidIsbn(isbn) {
+			return nil, fmt.Errorf("Invalid ISBN: %s", isbn)
+		}
 	}
 	return &parsed, nil
 }
@@ -103,12 +107,6 @@ func main() {
 			exitWithError(fmt.Sprintf("Invalid params: %v", err))
 		}
 
-		for _, isbn := range params.Isbn {
-			if !isValidIsbn(isbn) {
-				exitWithError(fmt.Sprintf("Invalid ISBN: %s", isbn))
-			}
-		}
-
 		result := make(map[string]any)
 
 		for i, isbn := range params.Isbn {
@@ -116,7 +114,7 @@ func main() {
 				time.Sleep(1 * time.Second)
 			}
 
-			detailInfo, err := FetchNaukaDetailByIsbn(strings.ReplaceAll(isbn, "-", ""), nil)
+			detailInfo, err := FetchNaukaDetailByIsbn(isbn, nil)
 			if err != nil {
 				result[isbn] = createErrorObject(err.Error())
 			} else {
@@ -146,19 +144,13 @@ func main() {
 			exitWithError(fmt.Sprintf("Invalid params: %v", err))
 		}
 
-		for _, isbn := range params.Isbn {
-			if !isValidIsbn(isbn) {
-				exitWithError(fmt.Sprintf("Invalid ISBN: %s", isbn))
-			}
-		}
-
 		result := make(map[string]any)
 		for i, isbn := range params.Isbn {
 			if i != 0 {
 				time.Sleep(1 * time.Second)
 			}
 
-			detailInfo, err := FetchKyokutoDetailByIsbn(strings.ReplaceAll(isbn, "-", ""), nil)
+			detailInfo, err := FetchKyokutoDetailByIsbn(isbn, nil)
 			if err != nil {
 				result[isbn] = createErrorObject(err.Error())
 			} else {

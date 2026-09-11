@@ -212,15 +212,15 @@ func parseKyokutoParams(args []string) ([]kyokutoParam, error) {
 	if *paramsJSON != "" && *isbn != "" {
 		return nil, fmt.Errorf("--params and --isbn cannot be used together")
 	}
-	if *isbn != "" {
-		*paramsJSON = `{"isbn":"` + strings.ReplaceAll(*isbn, `"`, `\"`) + `"}`
-	}
-	if *paramsJSON == "" {
+	if *paramsJSON == "" && *isbn == "" {
 		return nil, fmt.Errorf("--params or --isbn is required")
 	}
 
 	var params map[string]any
-	if err := json.Unmarshal([]byte(*paramsJSON), &params); err != nil {
+	if *isbn != "" {
+		params = make(map[string]any)
+		params["isbn"] = *isbn
+	} else if err := json.Unmarshal([]byte(*paramsJSON), &params); err != nil {
 		return nil, fmt.Errorf("invalid --params JSON: %v", err)
 	}
 	if params == nil {

@@ -121,6 +121,15 @@ func TestSearchKyokuto(t *testing.T) {
 			},
 		},
 		{Isbn: "9785986156750"}: {},
+		// ISBN with hyphen
+		{Isbn: "979-8-88719-658-9"}: {
+			{
+				Title:   "Dreams of Emancipation : A Transnational History of Revolutionary Russia.",
+				Isbn:    "9798887196589",
+				Price:   27881,
+				StoreID: "1749432665-891410",
+			},
+		},
 	}
 	for options, expected := range testCases {
 		result, err := SearchKyokuto(&options, client)
@@ -238,6 +247,18 @@ func TestFetchKyokutoDetailByIsbn(t *testing.T) {
 			Language:       "ja",
 			Isbn:           "9784910672786",
 			StoreID:        "1781833816-350504",
+		},
+		// ISBN with hyphen
+		"979-8-88719-658-9": {
+			Title:          "Dreams of Emancipation : A Transnational History of Revolutionary Russia.",
+			Author:         "Naganawa, Norihiro (ed.),",
+			Publisher:      "Academic Studies Pr., US",
+			Pages:          290,
+			PublishedMonth: "2025-04",
+			Price:          27881,
+			Language:       "en",
+			Isbn:           "9798887196589",
+			StoreID:        "1749432665-891410",
 		},
 	}
 	for isbn, expected := range testCases {

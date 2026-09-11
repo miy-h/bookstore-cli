@@ -229,3 +229,31 @@ func TestFetchNaukaDetail(t *testing.T) {
 		}
 	}
 }
+
+func TestFetchNaukaDetailByIsbn(t *testing.T) {
+	client := getMockedClientForNauka(t)
+	expected := BookDetailInfo{
+		Title:     "Мы на Западе и на Востоке. Культурно-исторические основы русской государственности. (Сила мысли)",
+		Author:    "Иванов В.Н.",
+		Publisher: "Родина",
+		Place:     "Москва",
+		Pages:     336,
+		Type:      "hard",
+		Year:      2024,
+		Isbn:      "9785002223046",
+		Price:     5280,
+		StoreID:   "256516",
+	}
+
+	testCases := map[string]BookDetailInfo{
+		"978-5-00222-304-6": expected,
+		"9785002223046":     expected,
+	}
+
+	for isbn, expected := range testCases {
+		result, err := FetchNaukaDetailByIsbn(isbn, client)
+		if err != nil || !reflect.DeepEqual(result, &expected) {
+			t.Errorf("fetch book detail failed: %s", isbn)
+		}
+	}
+}

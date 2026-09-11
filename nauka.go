@@ -326,7 +326,7 @@ func FetchNaukaDetail(storeId string, client *http.Client) (*BookDetailInfo, err
 }
 
 func FetchNaukaDetailByIsbn(isbn string, client *http.Client) (*BookDetailInfo, error) {
-	searchResults, err := SearchNauka(strings.ReplaceAll(isbn, "-", ""), client)
+	searchResults, err := SearchNauka(StripIsbnHyphens(isbn), client)
 	if err != nil {
 		return nil, err
 	}

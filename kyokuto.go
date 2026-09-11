@@ -14,6 +14,13 @@ import (
 )
 
 type KyokutoSearchOptions struct {
+	Keyword string
+	Title   string
+	Author  string
+	Isbn    string
+}
+
+type KyokutoSearchQuery struct {
 	Keyword string `url:"q"`
 	Title   string `url:"title"`
 	Author  string `url:"author"`
@@ -40,7 +47,13 @@ type KyokutoBookDetailInfo struct {
 }
 
 func SearchKyokuto(options *KyokutoSearchOptions, client *http.Client) ([]*KyokutoSearchResult, error) {
-	value, err := query.Values(options)
+	searchQuery := KyokutoSearchQuery{
+		Keyword: options.Keyword,
+		Title:   options.Title,
+		Author:  options.Author,
+		Isbn:    StripIsbnHyphens(options.Isbn),
+	}
+	value, err := query.Values(searchQuery)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode search options: %w", err)
 	}
@@ -226,7 +239,7 @@ func parseKyokutoDetail(s *goquery.Selection) (*KyokutoBookDetailInfo, error) {
 }
 
 func FetchKyokutoDetailByIsbn(isbn string, client *http.Client) (*KyokutoBookDetailInfo, error) {
-	searchResults, err := SearchKyokuto(&KyokutoSearchOptions{Isbn: strings.ReplaceAll(isbn, "-", "")}, client)
+	searchResults, err := SearchKyokuto(&KyokutoSearchOptions{Isbn: StripIsbnHyphens(isbn)}, client)
 	if err != nil {
 		return nil, err
 	}
