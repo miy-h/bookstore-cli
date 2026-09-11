@@ -38,7 +38,8 @@ func main() {
 
 	switch subcommand {
 	case "search":
-		if store == "nauka" {
+		switch store {
+		case "nauka":
 			config = commandConfig{
 				fixturePath: "fixtures/nauka/search.json",
 				urlFunc: func(query string) string {
@@ -51,7 +52,7 @@ func main() {
 			for _, arg := range args {
 				params = append(params, fixtureParam{key: arg, requestURL: config.urlFunc(arg)})
 			}
-		} else if store == "kyokuto" {
+		case "kyokuto":
 			config = commandConfig{
 				fixturePath: "fixtures/kyokuto/search.json",
 				selectorFunc: func(doc *goquery.Document) *goquery.Selection {
@@ -69,12 +70,13 @@ func main() {
 					requestURL: "https://www.kyokuto-bk.co.jp/books/?" + parsed.query,
 				})
 			}
-		} else {
+		default:
 			printUsage()
 			os.Exit(1)
 		}
 	case "detail":
-		if store == "kyokuto" {
+		switch store {
+		case "kyokuto":
 			config = commandConfig{
 				fixturePath: "fixtures/kyokuto/detail.json",
 				urlFunc: func(id string) string {
@@ -84,7 +86,7 @@ func main() {
 					return sanitizeSelection(doc.Find(".bd-section .container").First())
 				},
 			}
-		} else if store == "nauka" {
+		case "nauka":
 			config = commandConfig{
 				fixturePath: "fixtures/nauka/detail.json",
 				urlFunc: func(id string) string {
@@ -98,7 +100,7 @@ func main() {
 					return sel
 				},
 			}
-		} else {
+		default:
 			printUsage()
 			os.Exit(1)
 		}
