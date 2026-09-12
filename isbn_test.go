@@ -5,10 +5,17 @@ import (
 )
 
 func TestIsValidIsbn(t *testing.T) {
-	validIsbnList := []string{"9785986156750", "978-5-98615-675-0"}
-	for _, isbn := range validIsbnList {
-		if !IsValidIsbn(isbn) {
-			t.Errorf("IsValidIsbn failed: %s", isbn)
+	testCases := map[string]bool{
+		"9785986156750":     true,
+		"978-5-98615-675-0": true,
+		"9785986156751":     false,
+		"978598615675":      false,
+		"97859861567500":    false,
+		"978598615675A":     false,
+	}
+	for isbn, expected := range testCases {
+		if IsValidIsbn(isbn) != expected {
+			t.Errorf("IsValidIsbn(%q) = %v, want %v", isbn, !expected, expected)
 		}
 	}
 }
